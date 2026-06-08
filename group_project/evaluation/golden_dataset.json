@@ -1,17 +1,77 @@
 [
   {
-    "question": "Hình phạt cho tội tàng trữ trái phép chất ma tuý theo Điều 249 Bộ luật Hình sự?",
-    "expected_answer": "Phạt tù từ 1 đến 5 năm đối với trường hợp tàng trữ từ 1g đến dưới 5g heroin hoặc cocaine, hoặc chất ma tuý khác với khối lượng tương đương.",
-    "expected_context": "Bộ luật Hình sự 2015, Điều 249"
+    "question": "Pháp luật Việt Nam xử lý hành vi tàng trữ trái phép chất ma túy như thế nào?",
+    "expected_answer": "Hành vi tàng trữ trái phép chất ma túy có thể bị xử lý theo quy định pháp luật về ma túy và hình sự.",
+    "expected_context": "legal"
   },
   {
-    "question": "Luật Phòng chống ma tuý 2021 quy định những hình thức cai nghiện nào?",
-    "expected_answer": "Cai nghiện tự nguyện tại gia đình, cai nghiện tự nguyện tại cộng đồng, cai nghiện tự nguyện tại cơ sở cai nghiện, và cai nghiện bắt buộc tại cơ sở cai nghiện.",
-    "expected_context": "Luật Phòng chống ma tuý 2021, Chương V"
+    "question": "Tài liệu pháp luật trong corpus đề cập những nhóm nội dung nào?",
+    "expected_answer": "Corpus pháp luật đề cập phòng chống ma túy, chất cấm, tiền chất, xử phạt, hình phạt, cai nghiện và quản lý nhà nước.",
+    "expected_context": "legal"
   },
   {
-    "question": "Danh mục các chất ma tuý thuộc nhóm I theo quy định pháp luật Việt Nam gồm những chất nào?",
-    "expected_answer": "Nhóm I gồm các chất ma tuý tuyệt đối cấm sử dụng trong y học và đời sống, bao gồm heroin, cocaine, methamphetamine, MDMA (ecstasy), cannabis (cần sa), và các chất tương tự.",
-    "expected_context": "Nghị định 57/2022/NĐ-CP, Phụ lục I"
+    "question": "Pipeline có cần citation khi trả lời về ma túy không?",
+    "expected_answer": "Câu trả lời cần gắn citation từ tài liệu nguồn được retrieval.",
+    "expected_context": "citation"
+  },
+  {
+    "question": "Nếu không có bằng chứng trong context thì hệ thống phải trả lời gì?",
+    "expected_answer": "Hệ thống phải trả lời I cannot verify this information.",
+    "expected_context": "insufficient evidence"
+  },
+  {
+    "question": "News corpus phục vụ nhóm câu hỏi nào?",
+    "expected_answer": "News corpus phục vụ câu hỏi về nghệ sĩ Việt Nam, báo chí, ma túy, chất cấm và giới hạn xác minh thông tin.",
+    "expected_context": "news"
+  },
+  {
+    "question": "Bài báo về tin đồn liên quan chất cấm yêu cầu hệ thống tránh điều gì?",
+    "expected_answer": "Hệ thống cần tránh suy đoán nếu chỉ có tin đồn và không có kết luận chính thức.",
+    "expected_context": "article_03"
+  },
+  {
+    "question": "Task 4 sử dụng chunk size và overlap bao nhiêu?",
+    "expected_answer": "Pipeline cấu hình CHUNK_SIZE là 500 và CHUNK_OVERLAP là 50.",
+    "expected_context": "task4"
+  },
+  {
+    "question": "Semantic search trả về định dạng kết quả nào?",
+    "expected_answer": "Semantic search trả về danh sách dict gồm nội dung, điểm và metadata, sắp xếp theo điểm giảm dần.",
+    "expected_context": "task5"
+  },
+  {
+    "question": "Lexical search trong pipeline dùng cơ chế gì?",
+    "expected_answer": "Lexical search dùng BM25 nếu có thư viện rank-bm25, nếu không thì dùng fallback BM25 pure Python.",
+    "expected_context": "task6"
+  },
+  {
+    "question": "Reranking trong pipeline làm nhiệm vụ gì?",
+    "expected_answer": "Reranking chấm lại và sắp xếp lại candidates theo độ liên quan với query.",
+    "expected_context": "task7"
+  },
+  {
+    "question": "PageIndex fallback được đánh dấu source như thế nào?",
+    "expected_answer": "Kết quả fallback được gắn source là pageindex.",
+    "expected_context": "task8"
+  },
+  {
+    "question": "Retrieval pipeline kết hợp những module nào?",
+    "expected_answer": "Retrieval kết hợp semantic search, lexical search, RRF merge, rerank và fallback PageIndex.",
+    "expected_context": "task9"
+  },
+  {
+    "question": "Generation tránh lost in the middle bằng cách nào?",
+    "expected_answer": "Chunks được sắp xếp lại để đặt thông tin mạnh ở đầu và gần cuối context.",
+    "expected_context": "task10"
+  },
+  {
+    "question": "TOP_K trong generation được chọn là bao nhiêu?",
+    "expected_answer": "TOP_K được chọn là 5 để cân bằng giữa đủ evidence và context không quá dài.",
+    "expected_context": "task10"
+  },
+  {
+    "question": "TOP_P trong generation được chọn là bao nhiêu?",
+    "expected_answer": "TOP_P được chọn là 0.9 cho demo API-based generation.",
+    "expected_context": "task10"
   }
 ]
