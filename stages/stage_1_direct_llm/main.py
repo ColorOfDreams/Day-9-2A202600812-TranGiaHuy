@@ -19,7 +19,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from common.llm import get_llm
 
-QUESTION = "What are the legal consequences if a company breaches a non-disclosure agreement?"
+QUESTION = "Wrongful termination remedies?"
 
 
 async def main():
@@ -40,8 +40,7 @@ async def main():
     messages = [
         SystemMessage(
             content=(
-                "You are a legal expert. Provide a clear, concise analysis "
-                "of the legal question asked. Keep your response under 300 words."
+                "You are a legal expert. Answer briefly."
             )
         ),
         HumanMessage(content=QUESTION),

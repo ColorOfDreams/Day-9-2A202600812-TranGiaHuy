@@ -1,7 +1,4 @@
-"""Bài Tập 4: Thêm Privacy Agent vào Multi-Agent System
-
-Hoàn thành các TODO để thêm privacy agent và conditional routing.
-"""
+"""Exercise 4: Add a Privacy Agent to the multi-agent system."""
 
 import asyncio
 import os
@@ -19,7 +16,7 @@ from common.llm import get_llm
 
 
 def _last_wins(left: str | None, right: str | None) -> str:
-    """Reducer: giá trị mới ghi đè giá trị cũ."""
+    """Reducer for parallel branches: the newest non-empty value wins."""
     return right if right is not None else (left or "")
 
 
@@ -28,155 +25,202 @@ class State(TypedDict):
     law_analysis: Annotated[str, _last_wins]
     tax_analysis: Annotated[str, _last_wins]
     compliance_analysis: Annotated[str, _last_wins]
-    privacy_analysis: Annotated[str, _last_wins]  # TODO: Thêm field mới
+    privacy_analysis: Annotated[str, _last_wins]
+    needs_tax: bool
+    needs_compliance: bool
+    needs_privacy: bool
     final_response: str
 
 
 def law_agent(state: State) -> dict:
-    """Agent phân tích pháp lý tổng quát."""
+    """General legal analysis agent."""
     llm = get_llm()
-    prompt = f"""Bạn là chuyên gia pháp lý. Phân tích câu hỏi sau:
+    prompt = f"""You are a legal expert. Analyze the question below:
 
 {state['question']}
 
-Tập trung vào: hợp đồng, trách nhiệm dân sự, quyền và nghĩa vụ pháp lý."""
-    
+Focus on contracts, civil liability, legal rights, and legal obligations."""
+
     response = llm.invoke([HumanMessage(content=prompt)])
     return {"law_analysis": response.content}
 
 
-def check_routing(state: State) -> list[Send]:
-    """Quyết định gọi agents nào dựa trên nội dung câu hỏi."""
+def check_routing(state: State) -> dict:
+    """Decide which specialist agents should be called."""
     question_lower = state["question"].lower()
-    tasks = []
-    
-    # TODO: Thêm logic routing cho privacy_agent
-    # Gợi ý: kiểm tra keywords như "data", "privacy", "gdpr", "dữ liệu"
-    
-    if any(kw in question_lower for kw in ["tax", "irs", "thuế"]):
+
+    needs_tax = any(
+        keyword in question_lower
+        for keyword in ["tax", "irs", "revenue", "thuế", "thue"]
+    )
+    needs_compliance = any(
+        keyword in question_lower
+        for keyword in ["compliance", "sec", "regulation", "sox", "aml", "fCPA".lower()]
+    )
+    needs_privacy = any(
+        keyword in question_lower
+        for keyword in [
+            "data",
+            "privacy",
+            "gdpr",
+            "ccpa",
+            "breach",
+            "personal information",
+            "du lieu",
+            "bao mat",
+        ]
+    )
+
+    return {
+        "needs_tax": needs_tax,
+        "needs_compliance": needs_compliance,
+        "needs_privacy": needs_privacy,
+    }
+
+
+def route_to_specialists(state: State) -> list[Send]:
+    """Dispatch selected specialist agents in parallel."""
+    tasks: list[Send] = []
+
+    if state.get("needs_tax"):
         tasks.append(Send("tax_agent", state))
-    
-    if any(kw in question_lower for kw in ["compliance", "sec", "regulation"]):
+    if state.get("needs_compliance"):
         tasks.append(Send("compliance_agent", state))
-    
-    # YOUR CODE HERE: thêm điều kiện cho privacy_agent
-    
+    if state.get("needs_privacy"):
+        tasks.append(Send("privacy_agent", state))
+
     return tasks if tasks else [Send("aggregate_results", state)]
 
 
 def tax_agent(state: State) -> dict:
-    """Agent chuyên về thuế."""
+    """Tax specialist agent."""
     llm = get_llm()
-    prompt = f"""Bạn là chuyên gia thuế. Phân tích khía cạnh thuế trong câu hỏi:
+    prompt = f"""You are a tax expert. Analyze the tax aspect of this question:
 
-Câu hỏi: {state['question']}
-Phân tích pháp lý: {state.get('law_analysis', 'N/A')}
+Question: {state['question']}
+General legal analysis: {state.get('law_analysis', 'N/A')}
 
-Tập trung: IRS, tax evasion, penalties, FBAR, FATCA."""
-    
+Focus on IRS exposure, tax evasion, penalties, FBAR, FATCA, back taxes, and interest."""
+
     response = llm.invoke([HumanMessage(content=prompt)])
     return {"tax_analysis": response.content}
 
 
 def compliance_agent(state: State) -> dict:
-    """Agent chuyên về compliance."""
+    """Regulatory compliance specialist agent."""
     llm = get_llm()
-    prompt = f"""Bạn là chuyên gia compliance. Phân tích khía cạnh tuân thủ:
+    prompt = f"""You are a regulatory compliance expert. Analyze the compliance aspect:
 
-Câu hỏi: {state['question']}
-Phân tích pháp lý: {state.get('law_analysis', 'N/A')}
+Question: {state['question']}
+General legal analysis: {state.get('law_analysis', 'N/A')}
 
-Tập trung: SEC, SOX, FCPA, AML, regulatory violations."""
-    
+Focus on SEC, SOX, FCPA, AML, governance controls, and regulatory violations."""
+
     response = llm.invoke([HumanMessage(content=prompt)])
     return {"compliance_analysis": response.content}
 
 
-# TODO: Implement privacy_agent
 def privacy_agent(state: State) -> dict:
-    """Agent chuyên về bảo vệ dữ liệu cá nhân và GDPR."""
-    # YOUR CODE HERE
-    # Gợi ý: tương tự tax_agent và compliance_agent
-    # Tập trung: GDPR, data protection, privacy rights, data breach
-    pass
+    """Privacy and data-protection specialist agent."""
+    llm = get_llm()
+    prompt = f"""You are a privacy and data-protection lawyer. Analyze the privacy aspect:
+
+Question: {state['question']}
+General legal analysis: {state.get('law_analysis', 'N/A')}
+
+Focus on GDPR, CCPA, data breach notification, consent, data minimization, privacy rights,
+regulatory fines, customer notification, and remediation steps."""
+
+    response = llm.invoke([HumanMessage(content=prompt)])
+    return {"privacy_analysis": response.content}
 
 
 def aggregate_results(state: State) -> dict:
-    """Tổng hợp kết quả từ tất cả agents."""
+    """Aggregate all available agent analyses into one final response."""
     llm = get_llm()
-    
+
     sections = []
     if state.get("law_analysis"):
-        sections.append(f"📋 PHÂN TÍCH PHÁP LÝ:\n{state['law_analysis']}")
+        sections.append(f"LEGAL ANALYSIS:\n{state['law_analysis']}")
     if state.get("tax_analysis"):
-        sections.append(f"💰 PHÂN TÍCH THUẾ:\n{state['tax_analysis']}")
+        sections.append(f"TAX ANALYSIS:\n{state['tax_analysis']}")
     if state.get("compliance_analysis"):
-        sections.append(f"✅ PHÂN TÍCH TUÂN THỦ:\n{state['compliance_analysis']}")
-    # TODO: Thêm privacy_analysis vào sections
-    
+        sections.append(f"COMPLIANCE ANALYSIS:\n{state['compliance_analysis']}")
+    if state.get("privacy_analysis"):
+        sections.append(f"PRIVACY ANALYSIS:\n{state['privacy_analysis']}")
+
     combined = "\n\n".join(sections)
-    
-    prompt = f"""Tổng hợp các phân tích sau thành một báo cáo pháp lý hoàn chỉnh:
+
+    prompt = f"""Synthesize the following specialist analyses into a concise legal report:
 
 {combined}
 
-Câu hỏi gốc: {state['question']}
+Original question: {state['question']}
 
-Hãy tạo một báo cáo ngắn gọn, có cấu trúc rõ ràng."""
-    
+Create a short, clearly structured report and include a brief educational-use disclaimer."""
+
     response = llm.invoke([HumanMessage(content=prompt)])
     return {"final_response": response.content}
 
 
 def build_graph() -> StateGraph:
-    """Xây dựng multi-agent graph."""
+    """Build the multi-agent graph."""
     graph = StateGraph(State)
-    
-    # Add nodes
+
     graph.add_node("law_agent", law_agent)
     graph.add_node("check_routing", check_routing)
     graph.add_node("tax_agent", tax_agent)
     graph.add_node("compliance_agent", compliance_agent)
-    # TODO: Thêm privacy_agent node
+    graph.add_node("privacy_agent", privacy_agent)
     graph.add_node("aggregate_results", aggregate_results)
-    
-    # Define edges
+
     graph.add_edge(START, "law_agent")
     graph.add_edge("law_agent", "check_routing")
-    graph.add_conditional_edges("check_routing", lambda x: x)
+    graph.add_conditional_edges(
+        "check_routing",
+        route_to_specialists,
+        ["tax_agent", "compliance_agent", "privacy_agent", "aggregate_results"],
+    )
     graph.add_edge("tax_agent", "aggregate_results")
     graph.add_edge("compliance_agent", "aggregate_results")
-    # TODO: Thêm edge từ privacy_agent đến aggregate_results
+    graph.add_edge("privacy_agent", "aggregate_results")
     graph.add_edge("aggregate_results", END)
-    
+
     return graph.compile()
 
 
 async def main():
     load_dotenv()
-    
-    # Test với câu hỏi có liên quan đến privacy
-    question = "Nếu công ty bị rò rỉ dữ liệu khách hàng, hậu quả pháp lý và thuế là gì?"
-    
+
+    question = (
+        "A company suffered a customer data breach, failed to notify users, and hid "
+        "overseas revenue from tax authorities. What are the legal consequences?"
+    )
+
     print("=" * 70)
-    print("MULTI-AGENT SYSTEM với Privacy Agent")
+    print("MULTI-AGENT SYSTEM WITH PRIVACY AGENT")
     print("=" * 70)
-    print(f"\nCâu hỏi: {question}\n")
-    print("Đang xử lý qua các agents...\n")
-    
+    print(f"\nQuestion: {question}\n")
+    print("Processing through agents...\n")
+
     graph = build_graph()
-    
-    result = await graph.ainvoke({
-        "question": question,
-        "law_analysis": "",
-        "tax_analysis": "",
-        "compliance_analysis": "",
-        "privacy_analysis": "",
-        "final_response": "",
-    })
-    
+
+    result = await graph.ainvoke(
+        {
+            "question": question,
+            "law_analysis": "",
+            "tax_analysis": "",
+            "compliance_analysis": "",
+            "privacy_analysis": "",
+            "needs_tax": False,
+            "needs_compliance": False,
+            "needs_privacy": False,
+            "final_response": "",
+        }
+    )
+
     print("\n" + "=" * 70)
-    print("KẾT QUẢ CUỐI CÙNG")
+    print("FINAL RESULT")
     print("=" * 70)
     print(result["final_response"])
     print("\n" + "=" * 70)

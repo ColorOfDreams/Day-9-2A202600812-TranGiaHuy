@@ -191,7 +191,7 @@ async def main():
         print(f"  Result: {result[:200]}{'...' if len(result) > 200 else ''}")
         print()
 
-        messages.append(ToolMessage(content=result, tool_call_id=tc["id"]))
+        messages.append(ToolMessage(content=result[:900], tool_call_id=tc["id"]))
 
     # --- Step 3: LLM generates final grounded answer ---
     print(">>> Step 3: LLM generating final answer with tool results...\n")
