@@ -1,8 +1,0 @@
-.venv
-.env
-**cache**
-.claude
-**SOLUTION**
-repoer/
-report/
-streamlit*.log
